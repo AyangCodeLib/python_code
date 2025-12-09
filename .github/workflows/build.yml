@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build Windows exe
-        run: pyinstaller -F -w main.py --name swaggerClear
+        run: pyinstaller -F -w ./clear_swagger/main.py --name swaggerClear
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -43,7 +43,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build macOS executable
-        run: pyinstaller -F -w main.py --name swaggerClear
+        run: pyinstaller -F -w ./clear_swagger/main.py --name swaggerClear
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -69,7 +69,7 @@ jobs:
           pip install pyinstaller -r requirements.txt
 
       - name: Build Linux executable
-        run: pyinstaller -F main.py --name swaggerClear
+        run: pyinstaller -F ./clear_swagger/main.py --name swaggerClear
 
       - name: Build .deb package
         run: |
