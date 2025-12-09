@@ -3,10 +3,7 @@ name: Auto Build Executables
 on:
   push:
     tags:
-      - "v*"        # 推 Tag 自动发布，如 v1.0.0
-    branches:
-      - main
-      - master
+      - "v*"
 
 jobs:
   build-windows:
