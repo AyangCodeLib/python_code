@@ -128,7 +128,7 @@ class App:
                 with open(fp, "w", encoding="utf-8") as f:
                     f.write(content)
 
-        self.log("\n🎉 处理完成！")
+        self.log("\n🎉 处理完成了！")
 
 
 # ================================
