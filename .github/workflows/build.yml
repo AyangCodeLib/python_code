@@ -2,6 +2,8 @@ name: Auto Build Executables
 
 on:
   push:
+    tags:
+      - "v*"        # 推 Tag 自动发布，如 v1.0.0
     branches:
       - main
       - master
@@ -12,56 +14,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pyinstaller
+        run: pip install pyinstaller -r requirements.txt
 
-      - name: Build Windows exe
+      - name: Build Windows EXE
         run: pyinstaller -F -w ./clear_swagger/main.py --name swaggerClear
 
-      - name: Upload Windows artifact
+      - name: Upload EXE to artifacts
         uses: actions/upload-artifact@v4
         with:
           name: swaggerClear-windows
           path: dist/swaggerClear.exe
+
 
   build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pyinstaller
+        run: pip install pyinstaller -r requirements.txt
 
-      - name: Build macOS executable
+      - name: Build macOS binary
         run: pyinstaller -F -w ./clear_swagger/main.py --name swaggerClear
 
-      - name: Upload macOS artifact
+      - name: Upload macOS binary
         uses: actions/upload-artifact@v4
         with:
           name: swaggerClear-macos
           path: dist/swaggerClear
+
 
   build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Install PyInstaller + FPM
+      - name: Install PyInstaller & FPM
         run: |
           sudo apt update
           sudo apt install -y ruby ruby-dev build-essential python3-dev python3-pip
@@ -84,3 +88,26 @@ jobs:
           path: |
             dist/swaggerClear
             *.deb
+
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-files
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-files/swaggerClear-windows/swaggerClear.exe
+            release-files/swaggerClear-macos/swaggerClear
+            release-files/swaggerClear-linux/swaggerClear
+            release-files/swaggerClear-linux/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
