@@ -1,4 +1,4 @@
-name: Build 3-platform executables
+name: Auto Build Executables
 
 on:
   push:
@@ -10,10 +10,10 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
@@ -23,8 +23,8 @@ jobs:
       - name: Build Windows exe
         run: pyinstaller -F -w main.py --name swaggerClear
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
         with:
           name: swaggerClear-windows
           path: dist/swaggerClear.exe
@@ -32,10 +32,10 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
@@ -45,8 +45,8 @@ jobs:
       - name: Build macOS executable
         run: pyinstaller -F -w main.py --name swaggerClear
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
         with:
           name: swaggerClear-macos
           path: dist/swaggerClear
@@ -54,10 +54,10 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
@@ -68,35 +68,19 @@ jobs:
           sudo gem install --no-document fpm
           pip install pyinstaller -r requirements.txt
 
-      - name: Build Linux binary
+      - name: Build Linux executable
         run: pyinstaller -F main.py --name swaggerClear
 
       - name: Build .deb package
         run: |
           mkdir build-deb
           cp dist/swaggerClear build-deb/swaggerClear
-          fpm -s dir -t deb -n swaggerClear -v ${GITHUB_REF_NAME#v} build-deb/swaggerClear=/usr/bin/swaggerClear
+          fpm -s dir -t deb -n swaggerClear -v 1.0.0 build-deb/swaggerClear=/usr/bin/swaggerClear
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: swaggerClear-linux
           path: |
             dist/swaggerClear
             *.deb
-
-  release:
-    needs: [build-windows, build-macos, build-linux]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: release
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: release/**/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
