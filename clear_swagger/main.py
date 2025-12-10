@@ -5,6 +5,7 @@ from tkinter import filedialog, ttk, scrolledtext, messagebox
 
 from ApiModelProperty import convert_api_to_comment as property_conversion
 from ApiOperation import convert_java_file as operation_conversion
+from Api import convert_api_tag_to_javadoc as api_conversion
 from ApiModel import convert_api_model_to_javadoc as model_conversion
 
 
@@ -46,6 +47,12 @@ class App:
         tk.Checkbutton(check_frame, text="转换 ApiOperation(只生成注释，没有@param等参数)",
                        variable=self.var_api_operation).pack(side="left", padx=10)
         tk.Checkbutton(check_frame, text="转换 ApiModel", variable=self.var_api_model).pack(side="left", padx=10)
+
+        check_frame_2 = tk.Frame(self.root)
+        check_frame_2.pack(pady=5)
+
+        self.var_api = tk.BooleanVar(value=True)
+        tk.Checkbutton(check_frame_2, text="转换 Api", variable=self.var_api).pack(side="left", padx=10)
 
         # 执行按钮
         tk.Button(self.root, text="开始执行", width=20, command=self.start_process).pack(pady=10)
@@ -120,6 +127,12 @@ class App:
 
             if self.var_api_model.get():
                 content, added1 = model_conversion(content)
+                if added1:
+                    modified = True
+                    self.log(f"  ApiModel → JavaDoc 生成 {added1} 条")
+
+            if self.var_api.get():
+                content, added1 = api_conversion(content)
                 if added1:
                     modified = True
                     self.log(f"  ApiModel → JavaDoc 生成 {added1} 条")

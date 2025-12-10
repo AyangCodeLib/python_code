@@ -28,6 +28,10 @@ def convert_api_to_comment(java_text: str) -> (str, int):
     while i < len(lines):
         line = lines[i]
 
+        if line.strip().startswith("//"):
+            i += 1
+            continue
+
         match = API_PATTERN.search(line)
         if match:
             comment = match.group(1)

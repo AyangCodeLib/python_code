@@ -1,16 +1,17 @@
 import re
 from datetime import datetime
 
-# 匹配 @ApiModel("xxx") 或 @ApiModel(value="xxx")
-API_MODEL_PATTERN = re.compile(
-    r'@ApiModel\s*\(\s*(?:value\s*=\s*)?"([^"]+)"[^)]*\)'
+# 匹配 @Api("xxx") 或 @Api(tags="xxx")
+API_TAGS_PATTERN = re.compile(
+    r'@Api\s*\(\s*tags\s*=\s*"([^"]+)"\s*\)'
 )
+
 
 # 匹配 class / interface / enum / @interface
 TYPE_PATTERN = re.compile(r'\b(class|interface|enum|@interface)\b')
 
 
-def convert_api_model_to_javadoc(content: str) -> (str, int):
+def convert_api_tag_to_javadoc(content: str) -> (str, int):
     """
     将 @ApiModel 转为类/接口/注解上的 JavaDoc。
     规则：
@@ -30,7 +31,7 @@ def convert_api_model_to_javadoc(content: str) -> (str, int):
             i += 1
             continue
 
-        m = API_MODEL_PATTERN.search(line)
+        m = API_TAGS_PATTERN.search(line)
         if not m:
             i += 1
             continue
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     with open(fp, "r", encoding="utf-8") as f:
         txt = f.read()
 
-    new_txt, total = convert_api_model_to_javadoc(txt)
+    new_txt, total = convert_api_tag_to_javadoc(txt)
 
     with open(fp, "w", encoding="utf-8") as f:
         f.write(new_txt)
