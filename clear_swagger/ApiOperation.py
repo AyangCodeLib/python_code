@@ -17,10 +17,6 @@ def convert_java_file(java_text: str) -> (str, int):
     while i < len(lines):
         line = lines[i]
 
-        if line.strip().startswith("//"):
-            i += 1
-            continue
-
         match = API_OPERATION_PATTERN.search(line)
         if not match:
             i += 1

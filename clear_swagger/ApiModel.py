@@ -26,10 +26,6 @@ def convert_api_model_to_javadoc(content: str) -> (str, int):
     while i < len(lines):
         line = lines[i]
 
-        if line.strip().startswith("//"):
-            i += 1
-            continue
-
         m = API_MODEL_PATTERN.search(line)
         if not m:
             i += 1

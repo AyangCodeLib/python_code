@@ -6,7 +6,7 @@ import re
 
 # 匹配 @ApiModelProperty("xxx") 各种写法
 API_PATTERN = re.compile(
-    r'@ApiModelProperty\s*\(\s*[^)]*?value\s*=\s*"([^"]+)"[^)]*\)',
+    r'@ApiModelProperty\s*\(\s*(?:value\s*=\s*)?"([^"]+)"',
     re.S
 )
 
@@ -14,51 +14,71 @@ API_PATTERN = re.compile(
 DEF_COMMENT_PATTERN = re.compile(r'\s*/\*\*')
 
 
-def convert_api_to_comment(java_text: str) -> (str, int):
+def convert_api_to_comment(content: str) -> (str, int):
     """
     将 @ApiModelProperty("xxx") 转成 JavaDoc 注释块
     返回：新内容 + 替换次数
     """
 
-    lines = java_text.split("\n")
-    output = []
+    lines = content.split("\n")
+    i = 0
     replace_count = 0
 
-    i = 0
     while i < len(lines):
         line = lines[i]
 
-        if line.strip().startswith("//"):
+        m = API_PATTERN.search(line)
+        if not m:
             i += 1
             continue
 
-        match = API_PATTERN.search(line)
-        if match:
-            comment = match.group(1)
-            indent = re.match(r'\s*', line).group()
+        value = m.group(1)
+        indent = re.match(r"\s*", line).group()
 
-            # 检查下一行是否已有注释，避免重复生成
-            if i + 1 < len(lines) and DEF_COMMENT_PATTERN.search(lines[i + 1]):
-                output.append(line)  # 保留原注解行
-                i += 1
-                continue
+        # 1. 删除当前这一行 @ApiModel
+        lines.pop(i)
+        replace_count += 1
 
-            # 生成 JavaDoc 注释块
-            block = [
+        # 3. 找类型上方的注解块起点（紧挨着 type 之上的一串 @XXX）
+        anno_start = i
+        while anno_start - 1 >= 0 and lines[anno_start - 1].lstrip().startswith("@"):
+            anno_start -= 1
+
+        # 4. 尝试检测是否已经有 JavaDoc（在注解块之上且以 /** 开头，以 */ 结束）
+        javadoc_start = None
+        javadoc_end = anno_start - 1
+
+        if javadoc_end >= 0 and lines[javadoc_end].strip().endswith("*/"):
+            k = javadoc_end
+            while k >= 0:
+                if lines[k].strip().startswith("/**"):
+                    javadoc_start = k
+                    break
+                k -= 1
+
+        if javadoc_start is not None:
+            # === 已有 JavaDoc：在其开头后一行插入 “* xxx.” 和空行 ===
+            indent_doc = re.match(r"\s*", lines[javadoc_start]).group()
+            insertion = [
+                f"{indent_doc} * {value}.",
+                f"{indent_doc} *"
+            ]
+            insert_pos = javadoc_start + 1
+            lines[insert_pos:insert_pos] = insertion
+
+        else:
+            # === 没有 JavaDoc：在注解块之前新建一个 ===
+            new_javadoc = [
                 f"{indent}/**",
-                f"{indent} * {comment}.",
+                f"{indent} * {value}.",
                 f"{indent} */"
             ]
-            output.extend(block)
-            replace_count += 1
+            lines[anno_start:anno_start] = new_javadoc
+            # 插入后 type_index 向后偏移了，但我们后面不再用它，直接从原 j 后继续往下扫即可
 
-            i += 1
-            continue
-
-        output.append(line)
         i += 1
 
-    return "\n".join(output), replace_count
+    return "\n".join(lines), replace_count
 
 
 def process_directory(root_dir: str):
